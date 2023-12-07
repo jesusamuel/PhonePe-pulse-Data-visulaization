@@ -8,103 +8,511 @@ import plotly.express as px
 import plotly.io as pio
 from streamlit_option_menu import option_menu
 import mysql.connector 
-
+from PIL import Image, ImageDraw, ImageFont,ImageOps
 
 
 
 st.set_page_config(layout='wide')
-selected = option_menu("Phonepe | Pulse", ["Home",'Insights','Top Results'], 
-        icons=['house','gear'], menu_icon="cast",default_index=0,orientation='horizontal')
+
+selected = option_menu("Phonepe | Pulse", ["Home",'Map','Top Results','About'], 
+        icons=['house','gear','list-task'], menu_icon="cast",default_index=0,orientation='horizontal')
 
 
 st.subheader('',divider='rainbow')
-
-
-#Agg_state_list--> to get the list of states in India
-
-#<------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------>#
-
-#This is to extract the data's to create a dataframe
-
+    
 a,c=st.columns([4,4])
-a.subheader('Select below Parameters for Analysis')
 
-d,e,f=a.columns([1,1,1])
+#======================================================================================================
 
-year=d.selectbox('',[2018,2019,2020,2021,2022,2023],index=None,placeholder='Select Year')
+def About():
 
-if year != 2023:
-    quater=e.selectbox('',[1,2,3,4],index=None,placeholder='Select Quater')
-else:
-    quater=e.selectbox('',[1,2,3],index=None,placeholder='Select Quater')
-state=['telangana', 'andaman-&-nicobar-islands', 'andhra-pradesh', 'arunachal-pradesh', 'assam', 'bihar', 'chhattisgarh', 'ladakh', 'goa', 'gujarat', 'haryana', 'himachal-pradesh',
-       'jammu-&-kashmir', 'jharkhand', 'karnataka', 'kerala', 'lakshadweep', 'madhya-pradesh', 'maharashtra', 'manipur', 'chandigarh', 'puducherry', 'punjab', 'rajasthan', 'sikkim',
-       'tamil-nadu', 'tripura', 'uttar-pradesh', 'uttarakhand', 'west-bengal', 'odisha', 'dadra-&-nagar-haveli-&-daman-&-diu', 'meghalaya', 'mizoram', 'nagaland', 'delhi']    
+    #k.subheader("PhonePe is a digital payments platform and financial technology")
     
-state=f.selectbox('',state,index=None,placeholder='Select State')
+    image=Image.open(r"/Users/jesusamuel/phonepe.png")
+    image=image.resize((600,500))
+    a.image(image)
 
-a.subheader('',divider='grey')
-
-
-############################################################
-
-mydb = mysql.connector.connect(host='localhost',
-                              user='root',
-                              password='Jesu@123',
-                              database='Phonepe')
-
-mycursor = mydb.cursor()
-
-sql="select * from Aggregate_Transactions;"
-
-data1={}
-if year and quater and state:
-    sql="select * from Aggregate_Transactions where State=%s and Year=%s and Quater=%s"
-    mycursor = mydb.cursor()                       
-    mycursor.execute(sql,(state,year,quater))
-    data1=mycursor.fetchall()
-else:
-    mycursor = mydb.cursor()                       
-    mycursor.execute(sql)
-    data1=mycursor.fetchall()
-mycursor.execute("DESC Aggregate_Transactions;")
-data2=mycursor.fetchall()
-df1=pd.DataFrame(data2)
-ad=list(df1[0])                          
-
-
-df=pd.DataFrame(data=data1,columns=ad) 
-a.write(df)
-
-state_id={}
-with open('/Users/jesusamuel/Downloads/states_india.geojson','r') as anyfile:
-    data= json.load(anyfile)
-
-for i in data['features']:
-    i["id"] = i["properties"]["state_code"]
-    state_id[i["properties"]["st_nm"]] = i["id"]
     
 
-df['id']=df['State'].apply(lambda x:state_id[x])
-pio.renderers.default='chrome'
-h1,h2,h=c.columns([1.5,2,1])
-h2.subheader('Geo-Visualization Map')
-fig = px.choropleth(df,geojson=data,locations='id',
-                    color='id',color_continuous_scale="twilight",
-                           range_color=(0, 35),
-                    hover_name='State',
-                    hover_data=['Year','Quater','Transacion_count','Transacion_amount'],
-                    scope="asia",labels={'id':''},
-                    projection='mercator',
-                    
-                    
-                    height=0,width=800
-   
-)
-fig.update_geos(fitbounds='locations',visible=False)
+    text='''
 
-fig.update_layout(dragmode=False,margin={"r":0,"t":0,"l":0,"b":0},)#coloraxis_showscale=False)
-fig.update_layout(geo=dict(bgcolor= 'rgba(0,0,0,0)'))
-c.write('\n\n')
-c.write('')
-c.write(fig)
+
+
+
+
+
+
+        PhonePe is a digital payments platform and financial technology (fintech) company based in India. It was founded in December 2015 by Sameer Nigam, Rahul Chari, and Burzin Engineer. The platform provides a wide range of services related to digital payments, financial transactions, and online shopping. Here are some key aspects of PhonePe:
+
+Digital Payments:
+
+
+    PhonePe allows users to make various digital payments, including money transfers, bill payments, mobile recharges, and more.
+Users can link their bank accounts to the PhonePe app to facilitate seamless transactions.
+Unified Payments Interface (UPI):
+
+
+    PhonePe primarily operates on the Unified Payments Interface (UPI) system, which enables instant fund transfers between bank accounts using mobile devices with the help of the National Payments Corporation of India (NPCI).
+Mobile Wallet:
+
+
+    In addition to UPI, PhonePe also offers a mobile wallet that allows users to store money digitally and use it for transactions.
+Financial Services:
+
+
+    PhonePe has expanded its services to include various financial products and services. These may include insurance, mutual funds, and other investment options.
+Integration with Merchants:
+
+
+    PhonePe is widely accepted at various online and offline merchants, enabling users to make payments for goods and services.
+Partnerships and Collaborations:
+
+
+
+'''
+
+    c.write(text)
+
+
+
+
+####################################################################################################
+def Top_Results():
+    
+    a.subheader('Select below Parameters for Analysis',divider='rainbow')
+
+    d,e,f,g=a.columns([1,1,1,1])
+
+    Type =d.selectbox('',['Transaction','user'],index=None,placeholder='Select Type')
+    
+    quater =e.selectbox('',['1','2','3','4'],index=None,placeholder='Select Quater')
+
+    state =f.selectbox('',['telangana', 'andaman-&-nicobar-islands', 'andhra-pradesh', 'arunachal-pradesh', 'assam', 'bihar', 'chhattisgarh', 'ladakh', 'goa', 'gujarat', 'haryana', 'himachal-pradesh',
+               'jammu-&-kashmir', 'jharkhand', 'karnataka', 'kerala', 'lakshadweep', 'madhya-pradesh', 'maharashtra', 'manipur', 'chandigarh', 'puducherry', 'punjab', 'rajasthan', 'sikkim',
+               'tamil-nadu', 'tripura', 'uttar-pradesh', 'uttarakhand', 'west-bengal', 'odisha', 'dadra-&-nagar-haveli-&-daman-&-diu', 'meghalaya', 'mizoram', 'nagaland', 'delhi']
+                       ,index=None,placeholder='Select State')    
+    
+    mydb = mysql.connector.connect(host='localhost',
+                                          user='root',
+                                          password='Jesu@123',
+                                          database='Phonepe')
+
+    mycursor = mydb.cursor()
+
+    if Type == 'user':
+
+        if quater and state:
+            sql="select * from Map_Users where Quater=%s and State=%s"
+            mycursor.execute(sql,(quater,state))
+            data=mycursor.fetchall()
+            
+        elif quater:
+            sql="select * from Map_Users where Quater=%s"%quater
+            mycursor.execute(sql)
+            data=mycursor.fetchall()
+            
+        elif state:
+            sql="select * from Map_Users where State=%s"%state
+            mycursor.execute(sql)
+            data=mycursor.fetchall()
+            
+        else:
+            sql="select * from Map_Users where Quater=1"
+            mycursor.execute(sql)
+            data=mycursor.fetchall()
+            
+            
+        mycursor.execute("DESC Map_Users")
+        col=mycursor.fetchall()
+        col=pd.DataFrame(col)
+        col=list(col[0])
+        df=pd.DataFrame(data,columns=col)
+        a.write(df)
+        fig = px.bar(df, y="Registered_users",x='Year')
+        c.subheader('Analysis for Registered Users',divider='rainbow')
+        c.write(fig)
+        
+    else:
+        if quater and state:
+            sql="select * from Map_Transations where Quater=%s and State=%s"
+            mycursor.execute(sql,(quater,state))
+            data=mycursor.fetchall()
+            
+        elif quater:
+            sql="select * from Map_Transations where Quater=%s"%quater
+            mycursor.execute(sql)
+            data=mycursor.fetchall()
+            
+        elif state:
+            sql="select * from Map_Transations where State=%s"
+            mycursor.execute(sql,(state,))
+            data=mycursor.fetchall()
+            
+        else:
+            sql="select * from Map_Transations where Quater=1"
+            mycursor.execute(sql)
+            data=mycursor.fetchall()
+        
+        
+        mycursor.execute("DESC Map_Transations")
+        col=mycursor.fetchall()
+        col=pd.DataFrame(col)
+        col=list(col[0])
+        df=pd.DataFrame(data,columns=col)
+        a.write(df)
+        fig = px.bar(df, y="Transacion_amount",x='Year',color='Transacion_count')
+        c.subheader('Analysis for Transactions',divider='rainbow')
+        c.write(fig)
+        
+
+#============================================================================================================
+
+
+
+
+
+def Map():
+    
+    a.subheader('Select below Parameters for Analysis',divider='rainbow')
+
+    d,e,f,g=a.columns([1,1,1,1])
+
+    Type =d.selectbox('',['Transaction','user'],index=None,placeholder='Select Type')
+
+    year=e.selectbox('',[2018,2019,2020,2021,2022,2023],index=None,placeholder='Select Year')
+    quater = 1
+    if year == 2023:
+        quater=f.selectbox('',[1,2,3],index=None,placeholder='Select Quater')
+    else:
+        quater=f.selectbox('',[1,2,3,4],index=None,placeholder='Select Quater')
+            
+    state_lst=['telangana', 'andaman-&-nicobar-islands', 'andhra-pradesh', 'arunachal-pradesh', 'assam', 'bihar', 'chhattisgarh', 'ladakh', 'goa', 'gujarat', 'haryana', 'himachal-pradesh',
+               'jammu-&-kashmir', 'jharkhand', 'karnataka', 'kerala', 'lakshadweep', 'madhya-pradesh', 'maharashtra', 'manipur', 'chandigarh', 'puducherry', 'punjab', 'rajasthan', 'sikkim',
+               'tamil-nadu', 'tripura', 'uttar-pradesh', 'uttarakhand', 'west-bengal', 'odisha', 'dadra-&-nagar-haveli-&-daman-&-diu', 'meghalaya', 'mizoram', 'nagaland', 'delhi']    
+            
+    state=g.selectbox('',state_lst,index=None,placeholder='Select State')
+
+    
+    h,i,j=c.columns([.6,1.4,1])
+
+    mydb = mysql.connector.connect(host='localhost',
+                                      user='root',
+                                      password='Jesu@123',
+                                      database='Phonepe')
+
+    mycursor = mydb.cursor()
+
+    if Type == 'user':
+
+        sql1="select * from Top_Users where Quater=1 and Year = 2018 and State='tamil-nadu'"
+
+        if year and quater and state:
+            sql1="select * from Top_Users where State=%s and Year=%s and Quater=%s"
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1,(state,year,quater))
+            data2=mycursor.fetchall()
+        elif year and quater: 
+            sql1="select * from Top_Users where Year=%s and Quater=%s"
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1,(year,quater))
+            data2=mycursor.fetchall()
+        elif year:
+            sql1="select * from Top_Users where Year=%s"%year
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1)
+            data2=mycursor.fetchall()
+        elif quater:
+            sql1="select * from Top_Users where Quater=%s"%quater
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1)
+            data2=mycursor.fetchall()
+        elif state and year :
+            sql1="select * from Top_Users where State=%s and Year=%s"
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1,(state,year))
+            data2=mycursor.fetchall()
+        elif state:
+            sql1="select * from Top_Users where State=%s"
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1,(state,))
+            data2=mycursor.fetchall()
+            
+        else:
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1)
+            data2=mycursor.fetchall()
+                
+        mycursor.execute("DESC Top_Users;")
+        data3=mycursor.fetchall()
+        df1=pd.DataFrame(data3)
+        ad=list(df1[0])                          
+
+
+        df=pd.DataFrame(data=data2,columns=ad)
+
+        a.write(df)
+        fig = px.pie(df,values='Registered_users',color='District_name',hole=0.3,names='District_name',height=400,width=600)
+        i.subheader('Pie for Top 10 Districts',divider='rainbow')
+        c.write(fig)
+        
+    else:
+
+        sql1="select * from Top_Transations where Quater=1 and Year = 2018 and State='tamil-nadu'"
+
+        if year and quater and state:
+            sql1="select * from Top_Transations where State=%s and Year=%s and Quater=%s"
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1,(state,year,quater))
+            data2=mycursor.fetchall()
+        elif year and quater: 
+            sql1="select * from Top_Transations where Year=%s and Quater=%s"
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1,(year,quater))
+            data2=mycursor.fetchall()
+        elif year:
+            sql1="select * from Top_Transations where Year=%s"%year
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1)
+            data2=mycursor.fetchall()
+        elif quater:
+            sql1="select * from Top_Transations where Quater=%s"%quater
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1)
+            data2=mycursor.fetchall()
+        elif state and year :
+            sql1="select * from Top_Transations where State=%s and Year=%s"
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1,(state,year))
+            data2=mycursor.fetchall()
+        elif state:
+            sql1="select * from Top_Transations where State=%s"
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1,(state,))
+            data2=mycursor.fetchall()
+            
+        else:
+            mycursor = mydb.cursor()                       
+            mycursor.execute(sql1)
+            data2=mycursor.fetchall()
+                
+        mycursor.execute("DESC Top_Transations;")
+        data3=mycursor.fetchall()
+        df1=pd.DataFrame(data3)
+        ad=list(df1[0])                          
+
+
+        df=pd.DataFrame(data=data2,columns=ad)
+
+        a.write(df)
+        fig = px.pie(df,values='Transacion_amount',color='District_name',hole=0.3,names='District_name',height=400,width=600)
+        i.subheader('Pie for Top 10 Districts',divider='rainbow')
+        c.write(fig)
+###############
+
+ 
+
+
+    
+
+def main():
+    
+
+    #Agg_state_list--> to get the list of states in India
+
+    #<------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------>#
+
+    #This is to extract the data's to create a dataframe
+
+    if selected == 'Home':
+        
+        a.subheader('Select below Parameters for Analysis',divider='rainbow')
+
+        d,e,f,g=a.columns([1,1,1,1])
+
+        Type =d.selectbox('',['Transaction','user'],index=None,placeholder='Select Type')
+
+        
+
+        year=e.selectbox('',[2018,2019,2020,2021,2022,2023],index=None,placeholder='Select Year')
+
+        if year == 2023:
+            quater=f.selectbox('',[1,2,3],index=None,placeholder='Select Quater')
+        else:
+            quater=f.selectbox('',[1,2,3,4],index=None,placeholder='Select Quater')
+            
+        state=['telangana', 'andaman-&-nicobar-islands', 'andhra-pradesh', 'arunachal-pradesh', 'assam', 'bihar', 'chhattisgarh', 'ladakh', 'goa', 'gujarat', 'haryana', 'himachal-pradesh',
+               'jammu-&-kashmir', 'jharkhand', 'karnataka', 'kerala', 'lakshadweep', 'madhya-pradesh', 'maharashtra', 'manipur', 'chandigarh', 'puducherry', 'punjab', 'rajasthan', 'sikkim',
+               'tamil-nadu', 'tripura', 'uttar-pradesh', 'uttarakhand', 'west-bengal', 'odisha', 'dadra-&-nagar-haveli-&-daman-&-diu', 'meghalaya', 'mizoram', 'nagaland', 'delhi']    
+            
+        state=g.selectbox('',state,index=None,placeholder='Select State')
+
+        a.subheader('',divider='grey')
+
+
+        ############################################################
+
+        mydb = mysql.connector.connect(host='localhost',
+                                      user='root',
+                                      password='Jesu@123',
+                                      database='Phonepe')
+
+        mycursor = mydb.cursor()
+
+        if Type == 'user':
+                
+            sql="select * from Aggregate_users;"
+
+            data1={}
+            if year and quater and state:
+                sql="select * from Aggregate_users where State=%s and Year=%s and Quater=%s"
+                                       
+                mycursor.execute(sql,(state,year,quater))
+                data1=mycursor.fetchall()
+            else:
+                                       
+                mycursor.execute(sql)
+                data1=mycursor.fetchall()
+            mycursor.execute("DESC Aggregate_users;")
+            data2=mycursor.fetchall()
+            df1=pd.DataFrame(data2)
+            ad=list(df1[0])                          
+
+            df=pd.DataFrame(data=data1,columns=ad)
+
+            if year and quater and state==None: 
+                df=df.loc[(df['Quater']==quater) & (df['Year'] ==year)]
+            elif year and quater==None and state==None:
+                df=df.loc[df['Year'] ==year] 
+            elif quater and year==None and state==None:
+                df=df.loc[df['Quater']==quater]
+            elif state and year and quater ==None:
+                df=df.loc[(df['State']==state) & (df['Year'] ==year)]
+            a.write(df)    
+
+            state_id={}
+            with open('/Users/jesusamuel/Downloads/states_india.geojson','r') as anyfile:
+                data= json.load(anyfile)
+
+            for i in data['features']:
+                i["id"] = i["properties"]["state_code"]
+                state_id[i["properties"]["st_nm"]] = i["id"]
+                
+
+            df['id']=df['State'].apply(lambda x:state_id[x])
+            h1,h2,h=c.columns([1.5,2,1])
+            h2.subheader('Geo-Visualization Map',divider='rainbow')
+            fig = px.choropleth(df,geojson=data,locations='id',
+                                color='id',color_continuous_scale="twilight",
+                                       range_color=(0, 35),
+                                hover_name='State',
+                                hover_data=['Year','Quater','Registered_users'],
+                                scope="asia",labels={'id':''},
+                                projection='mercator',
+                                
+                                
+                                height=0,width=800
+               
+            )
+            fig.update_geos(fitbounds='locations',visible=False)
+
+            fig.update_layout(dragmode='pan',margin={"r":0,"t":0,"l":0,"b":0},)#coloraxis_showscale=False)
+            fig.update_layout(geo=dict(bgcolor= 'rgba(0,0,0,0)'))
+            c.write('\n\n')
+            c.write('')
+            c.write(fig)
+
+
+        else:
+            
+            
+            sql1="select * from Aggregate_Transactions;"
+
+            data2={}
+            if year and quater and state:
+                sql1="select * from Aggregate_Transactions where State=%s and Year=%s and Quater=%s"
+                mycursor = mydb.cursor()                       
+                mycursor.execute(sql1,(state,year,quater))
+                data2=mycursor.fetchall()
+            elif year and quater: 
+                sql1="select * from Aggregate_Transactions where Year=%s and Quater=%s"
+                mycursor = mydb.cursor()                       
+                mycursor.execute(sql1,(year,quater))
+                data2=mycursor.fetchall()
+            elif year:
+                sql1="select * from Aggregate_Transactions where Year=%s"%year
+                mycursor = mydb.cursor()                       
+                mycursor.execute(sql1)
+                data2=mycursor.fetchall()
+            elif quater:
+                sql1="select * from Aggregate_Transactions where Quater=%s"%quater
+                mycursor = mydb.cursor()                       
+                mycursor.execute(sql1)
+                data2=mycursor.fetchall()
+            elif state and year :
+                sql1="select * from Aggregate_Transactions where State=%s and Year=%s"
+                mycursor = mydb.cursor()                       
+                mycursor.execute(sql1,(state,year))
+                data2=mycursor.fetchall()
+            else:
+                mycursor = mydb.cursor()                       
+                mycursor.execute(sql1)
+                data2=mycursor.fetchall()
+                
+            mycursor.execute("DESC Aggregate_Transactions;")
+            data3=mycursor.fetchall()
+            df1=pd.DataFrame(data3)
+            ad=list(df1[0])                          
+
+
+            df=pd.DataFrame(data=data2,columns=ad)
+
+            a.write(df)
+            
+
+            state_id={}
+            with open('/Users/jesusamuel/Downloads/states_india.geojson','r') as anyfile:
+                data= json.load(anyfile)
+
+            for i in data['features']:
+                i["id"] = i["properties"]["state_code"]
+                state_id[i["properties"]["st_nm"]] = i["id"]
+                
+
+            df['id']=df['State'].apply(lambda x:state_id[x])
+            h1,h2,h=c.columns([1.5,2,1])
+            h2.subheader('Geo-Visualization Map',divider='rainbow')
+            
+            fig = px.choropleth(df,geojson=data,locations='id',
+                                color='id',color_continuous_scale="twilight",
+                                       range_color=(0, 35),
+                                hover_name='State',
+                                hover_data=['Year','Quater','Transacion_count','Transacion_amount'],
+                                scope="asia",labels={'id':''},
+                                projection='mercator',
+                                
+                                
+                                height=0,width=800
+               
+            )
+            fig.update_geos(fitbounds='locations',visible=False)
+
+            fig.update_layout(dragmode='pan',margin={"r":0,"t":0,"l":0,"b":0},)#coloraxis_showscale=False)
+            fig.update_layout(geo=dict(bgcolor= 'rgba(0,0,0,0)'))
+            c.write('\n\n')
+            c.write('')
+            c.write(fig)
+
+    elif selected == 'Top Results':
+        Map()
+        
+
+    elif selected == 'Map':
+        Top_Results()
+    elif selected == 'About':
+        
+        About()
+
+
+if __name__ == "__main__":
+    main()
+
